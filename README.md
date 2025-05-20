@@ -25,9 +25,58 @@ Dieses Projekt lädt öffentliche StatsBomb-Spieldaten (Saison 2015/2016 der Top
 
 ## Modelltraining & Interpretierbarkeit
 
-1. **XGBoost-Modell**  
-   - Klassifikator zur Vorhersage von Tor-/Gegentor-Wahrscheinlichkeiten  
-   - Hyperparameter-Optimierung via Cross-Validation  
+### 1. Datenaufteilung
 
-2. **interpret.ml**  
-   - Einsatz von `interpret.glass-box` für globale Feature-Importances  
+- train_test_split von scikit-learn mit train_size=50000, random_state=42 und shuffle=True zur Festlegung eines reproduzierbaren Trainingsdatensatzes.
+
+### 2. Baseline: Dummy-Modell
+
+- DummyClassifier(strategy='most_frequent') als einfaches Referenzmodell.
+
+### 3. XGBoost-Klassifikator
+
+- xgb.XGBClassifier(n_jobs=-1, enable_categorical=True, random_state=42)
+
+- Training via xgb_model.fit(X_train, Y_train)
+
+- Doppeltes Training (mit und ohne zusätzlichem player_id-Feature) zur Untersuchung des Einflusses von Spielerkennungen.
+
+### 4. interpret.ml (Glassbox / EBM)
+
+- ExplainableBoostingClassifier(n_jobs=-1, random_state=42, max_bins=32, interactions=5)
+
+- Training via ebm.fit(X_train, y_train_array)
+
+- Globale Feature-Importances und lokale Erklärungen (ähnlich SHAP) über interpret.show.
+
+### 5. Evaluierung
+
+- Gemeinsame Bewertungsfunktion evaluate_my_model(model, X_test, Y_test) zur Ausgabe folgender Metriken:
+
+  - Brier Score – mittlere quadratische Fehlerabweichung der Wahrscheinlichkeiten.
+
+  - Log Loss – Misst Güte der Wahrscheinlichkeitsprognosen.
+
+  - ROC AUC – Fähigkeit, zwischen Klassen zu unterscheiden.
+
+## Evaluierung der Modelle
+**Dummy-Modell**
+- strategy='most_frequent'
+- Brier score: 0.17194
+- log loss score: 6.19735
+- ROC AUC: 0.50000
+
+
+**XGBoost**
+- Brier score: 0.06686
+- log loss score: 0.21067
+- ROC AUC: 0.94445
+
+
+**interpret.ml (Glassbox)**
+- train_size: 100000
+- Brier score: 0.07086
+- log loss score: 0.22259
+- ROC AUC: 0.93857
+
+
